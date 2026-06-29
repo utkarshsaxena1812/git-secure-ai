@@ -2,7 +2,7 @@ import { readFile, writeFile, rm } from 'node:fs/promises'
 import { join, dirname, basename } from 'node:path'
 import { config } from './config.js'
 import { cloneInstallationRepo, scanDirForDependencies } from './scan.js'
-import { openPullRequest, type FileChange } from './githubApp.js'
+import { openPullRequest, isBranchProtected, mergePullRequest, type FileChange } from './githubApp.js'
 import { planDependencyFix, isAutoFixable, ecosystemOf, applyPipBump, editNpmPackageJson } from './fix.js'
 import { recordFix } from './store.js'
 import { runNpm } from './sandbox.js'
@@ -33,6 +33,8 @@ export type FixOutcome = {
   advisory: string
   validated: boolean
   testStatus: TestStatus
+  merged: boolean
+  mergeNote?: string
 }
 
 /**
@@ -45,6 +47,7 @@ export async function runDependencyFix(
   installationId: number,
   repoId: string,
   finding: Finding,
+  autoMerge = false,
 ): Promise<FixOutcome> {
   if (finding.category !== 'Dependency' || !finding.fix) {
     throw new FixError('No automatic fix is available for this finding.', 'no_fix')
@@ -78,7 +81,7 @@ export async function runDependencyFix(
       }
     }
 
-    let pr: { url: string; number: number }
+    let pr: { url: string; number: number; baseBranch: string }
     try {
       pr = await openPullRequest(installationId, repo.fullName, {
         branch: plan.branch,
@@ -89,6 +92,20 @@ export async function runDependencyFix(
       })
     } catch (err) {
       throw new FixError(`Failed to open the pull request: ${(err as Error).message}`, 'pr_failed')
+    }
+
+    // Opt-in auto-merge — dependency bumps only (this loop), never a protected
+    // base branch (principle #5). Anything else is left open for human review.
+    let merged = false
+    let mergeNote: string | undefined
+    if (autoMerge) {
+      if (await isBranchProtected(installationId, repo.fullName, pr.baseBranch)) {
+        mergeNote = `Base branch “${pr.baseBranch}” is protected — left open for review.`
+      } else {
+        const res = await mergePullRequest(installationId, repo.fullName, pr.number)
+        merged = res.merged
+        if (!merged) mergeNote = res.message ?? 'Auto-merge was blocked — left open for review.'
+      }
     }
 
     await recordFix({
@@ -102,6 +119,7 @@ export async function runDependencyFix(
       advisory: fix.advisory,
       prUrl: pr.url,
       prNumber: pr.number,
+      status: merged ? 'merged' : 'open',
     })
 
     return {
@@ -113,6 +131,8 @@ export async function runDependencyFix(
       advisory: fix.advisory,
       validated: true,
       testStatus,
+      merged,
+      mergeNote,
     }
   } finally {
     await rm(workdir, { recursive: true, force: true }).catch(() => {})

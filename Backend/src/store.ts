@@ -86,6 +86,7 @@ export async function recordFix(data: {
   advisory: string
   prUrl: string
   prNumber: number
+  status?: string
 }): Promise<void> {
   await prisma.fix.create({
     data: {
@@ -99,7 +100,7 @@ export async function recordFix(data: {
       advisory: data.advisory,
       prUrl: data.prUrl,
       prNumber: data.prNumber,
-      status: 'open',
+      status: data.status ?? 'open',
     },
   })
 }

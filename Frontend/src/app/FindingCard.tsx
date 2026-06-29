@@ -11,7 +11,7 @@ import {
   Wrench,
 } from 'lucide-react'
 import { SEVERITY_META, type Finding, type Category } from './mockData'
-import type { Level } from './SettingsContext'
+import { useSettings, type Level } from './SettingsContext'
 import { isLiveMode, previewFix, openFix, ApiError, type FixPlan, type FixResult } from './api'
 
 const CATEGORY_ICON: Record<Category, typeof KeyRound> = {
@@ -48,6 +48,7 @@ export default function FindingCard({ finding, level, allocatePr, repoId }: Prop
   const [plan, setPlan] = useState<FixPlan | null>(null)
   const [fixResult, setFixResult] = useState<FixResult | null>(null)
   const [errorMsg, setErrorMsg] = useState<string>('')
+  const { autoMergeDependencies } = useSettings()
 
   const copy = finding[level]
   const sev = SEVERITY_META[finding.severity]
@@ -74,7 +75,7 @@ export default function FindingCard({ finding, level, allocatePr, repoId }: Prop
     if (isLiveMode) {
       setState('working')
       try {
-        const result = await openFix(repoId ?? '', finding.id)
+        const result = await openFix(repoId ?? '', finding.id, autoMergeDependencies)
         setFixResult(result)
         setState('pr-live')
       } catch (err) {
@@ -177,18 +178,25 @@ export default function FindingCard({ finding, level, allocatePr, repoId }: Prop
 
         {state === 'pr-live' && fixResult && (
           <div className="text-sm w-full">
-            <p className="inline-flex items-center gap-2 text-azure font-medium">
+            <p
+              className="inline-flex items-center gap-2 font-medium"
+              style={{ color: fixResult.merged ? '#3fb950' : '#2f80ff' }}
+            >
               <GitPullRequest className="w-4 h-4" />
-              Pull request #{fixResult.prNumber} opened —{' '}
+              Pull request #{fixResult.prNumber} {fixResult.merged ? 'merged' : 'opened'} —{' '}
               <span className="font-mono text-white">
                 {fixResult.package} {fixResult.fromVersion} → {fixResult.toVersion}
               </span>
             </p>
             <p className="text-white/55 text-xs mt-1.5">
               Vulnerability confirmed resolved by re-scan.{' '}
-              {fixResult.testStatus === 'passed'
-                ? 'The repo’s tests passed after the bump.'
-                : 'Your CI runs the tests on the PR — review and merge.'}
+              {fixResult.merged
+                ? 'Auto-merged (you opted in for dependency bumps).'
+                : fixResult.mergeNote
+                  ? fixResult.mergeNote
+                  : fixResult.testStatus === 'passed'
+                    ? 'The repo’s tests passed after the bump.'
+                    : 'Your CI runs the tests on the PR — review and merge.'}
             </p>
             <a
               href={fixResult.prUrl}
@@ -197,7 +205,7 @@ export default function FindingCard({ finding, level, allocatePr, repoId }: Prop
               className="inline-flex items-center gap-1.5 mt-2 text-azure hover:underline text-xs font-medium"
             >
               <ExternalLink className="w-3.5 h-3.5" />
-              Review pull request
+              {fixResult.merged ? 'View pull request' : 'Review pull request'}
             </a>
           </div>
         )}

@@ -106,7 +106,7 @@ export async function openPullRequest(
   installationId: number,
   repoFullName: string,
   params: OpenPrParams,
-): Promise<{ url: string; number: number }> {
+): Promise<{ url: string; number: number; baseBranch: string }> {
   const octokit = await getApp().getInstallationOctokit(installationId)
   const [owner, repo] = repoFullName.split('/')
 
@@ -161,7 +161,44 @@ export async function openPullRequest(
     base,
     body: params.body,
   })
-  return { url: pr.html_url, number: pr.number }
+  return { url: pr.html_url, number: pr.number, baseBranch: base }
+}
+
+/** Whether a branch has protection rules (used to gate auto-merge — principle #5). */
+export async function isBranchProtected(
+  installationId: number,
+  repoFullName: string,
+  branch: string,
+): Promise<boolean> {
+  const octokit = await getApp().getInstallationOctokit(installationId)
+  const [owner, repo] = repoFullName.split('/')
+  try {
+    const { data } = await octokit.request('GET /repos/{owner}/{repo}/branches/{branch}', { owner, repo, branch })
+    return Boolean(data.protected)
+  } catch {
+    return false
+  }
+}
+
+/** Merges a pull request (squash). Returns false if GitHub blocks it (e.g. checks/conflicts). */
+export async function mergePullRequest(
+  installationId: number,
+  repoFullName: string,
+  pullNumber: number,
+): Promise<{ merged: boolean; message?: string }> {
+  const octokit = await getApp().getInstallationOctokit(installationId)
+  const [owner, repo] = repoFullName.split('/')
+  try {
+    const { data } = await octokit.request('PUT /repos/{owner}/{repo}/pulls/{pull_number}/merge', {
+      owner,
+      repo,
+      pull_number: pullNumber,
+      merge_method: 'squash',
+    })
+    return { merged: Boolean(data.merged) }
+  } catch (err) {
+    return { merged: false, message: (err as Error).message }
+  }
 }
 
 /** Lists repos reachable through an installation, normalized to the frontend Repo shape. */

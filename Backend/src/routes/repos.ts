@@ -112,14 +112,14 @@ export async function repoRoutes(app: FastifyInstance) {
     if (!session) return reply.code(401).send({ error: 'unauthenticated' })
 
     const { id } = req.params as { id: string }
-    const { fingerprint } = (req.body ?? {}) as { fingerprint?: string }
+    const { fingerprint, autoMerge } = (req.body ?? {}) as { fingerprint?: string; autoMerge?: boolean }
     if (!fingerprint) return reply.code(400).send({ error: 'bad_request', message: 'fingerprint is required.' })
 
     const finding = await getFinding(session.installationId, id, fingerprint)
     if (!finding) return reply.code(404).send({ error: 'not_found', message: 'Finding not found.' })
 
     try {
-      const outcome = await runDependencyFix(session.installationId, id, finding)
+      const outcome = await runDependencyFix(session.installationId, id, finding, Boolean(autoMerge))
       return outcome
     } catch (err) {
       if (err instanceof FixError) {

@@ -229,15 +229,17 @@ export type FixResult = {
   advisory: string
   validated: boolean
   testStatus: 'passed' | 'failed' | 'no-tests' | 'skipped' | 'error'
+  merged: boolean
+  mergeNote?: string
 }
 
 /** Live mode: run the validated fix loop and open a PR. Throws ApiError on failure. */
-export async function openFix(repoId: string, fingerprint: string): Promise<FixResult> {
+export async function openFix(repoId: string, fingerprint: string, autoMerge = false): Promise<FixResult> {
   const res = await fetch(`${API_URL}/api/repos/${repoId}/fix`, {
     method: 'POST',
     credentials: 'include',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ fingerprint }),
+    body: JSON.stringify({ fingerprint, autoMerge }),
   })
   if (!res.ok) {
     let message = res.statusText
