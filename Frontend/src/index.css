@@ -1,0 +1,78 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    font-family: 'Space Grotesk', sans-serif;
+  }
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    background: #04060a;
+    letter-spacing: -0.02em;
+    -webkit-font-smoothing: antialiased;
+  }
+  .font-playfair {
+    /* display accent — now Space Grotesk italic to suit the AI/code direction */
+    font-family: 'Space Grotesk', sans-serif;
+    font-style: italic;
+  }
+  .font-mono {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+  }
+}
+
+/* ---- hero load animations ---- */
+@keyframes heroReveal {
+  0%   { opacity: 0; transform: translateY(28px); filter: blur(12px); }
+  100% { opacity: 1; transform: translateY(0);    filter: blur(0); }
+}
+@keyframes heroFadeUp {
+  0%   { opacity: 0; transform: translateY(20px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+@keyframes heroZoom {
+  0%   { transform: scale(1.12); }
+  100% { transform: scale(1); }
+}
+.hero-anim {
+  opacity: 0;
+  animation-fill-mode: forwards;
+  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+}
+.hero-reveal { animation-name: heroReveal; animation-duration: 1.1s; }
+.hero-fade   { animation-name: heroFadeUp; animation-duration: 1s; }
+.hero-zoom   { animation: heroZoom 1.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+
+/* ---- floating code glyphs in the AI backdrop ---- */
+@keyframes glyphDrift {
+  0%   { transform: translateY(0) translateX(0); opacity: 0.0; }
+  15%  { opacity: var(--glyph-opacity, 0.5); }
+  85%  { opacity: var(--glyph-opacity, 0.5); }
+  100% { transform: translateY(-46px) translateX(8px); opacity: 0; }
+}
+.glyph {
+  animation: glyphDrift var(--glyph-dur, 9s) ease-in-out infinite;
+  animation-delay: var(--glyph-delay, 0s);
+}
+
+/* ---- scroll-in reveal (used by sections) ---- */
+.reveal-on-scroll {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.reveal-on-scroll.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .hero-anim, .hero-zoom { animation: none; opacity: 1; }
+  .reveal-on-scroll { opacity: 1; transform: none; transition: none; }
+  .glyph { animation: none; opacity: var(--glyph-opacity, 0.4); }
+}

@@ -1,0 +1,83 @@
+// Git Secure-AI data model.
+// SQLite for local dev — swap `provider` to "postgresql" for production (the
+// schema is written conservatively to port cleanly: no enums, no arrays).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String         @id @default(cuid())
+  githubLogin   String         @unique
+  name          String?
+  avatarUrl     String?
+  createdAt     DateTime       @default(now())
+  installations Installation[]
+}
+
+model Installation {
+  id           String   @id // GitHub installation id (string)
+  accountLogin String
+  userId       String?
+  user         User?    @relation(fields: [userId], references: [id])
+  scans        Scan[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Scan {
+  id             String       @id @default(cuid())
+  installation   Installation @relation(fields: [installationId], references: [id])
+  installationId String
+  repoGithubId   String // the repo's GitHub id
+  repoFullName   String
+  status         String // 'completed' | 'failed'
+  scanners       String // comma-separated, e.g. "gitleaks"
+  durationMs     Int
+  findingCount   Int          @default(0)
+  error          String?
+  createdAt      DateTime     @default(now())
+  findings       Finding[]
+
+  @@index([installationId, repoGithubId, createdAt])
+}
+
+model Fix {
+  id             String   @id @default(cuid())
+  installationId String
+  repoGithubId   String
+  repoFullName   String
+  fingerprint    String // the finding this fix resolves
+  package        String
+  fromVersion    String
+  toVersion      String
+  advisory       String
+  prUrl          String
+  prNumber       Int
+  status         String // 'open'
+  createdAt      DateTime @default(now())
+
+  @@index([installationId, repoGithubId])
+}
+
+model Finding {
+  id          String   @id @default(cuid())
+  scan        Scan     @relation(fields: [scanId], references: [id], onDelete: Cascade)
+  scanId      String
+  fingerprint String // scanner-stable id (e.g. gitleaks fingerprint)
+  label       String
+  severity    String // Critical | High | Medium | Low
+  category    String // Secret | Dependency | Code
+  ref         String // file:line or package ref
+  beginner    String // JSON {what,why,fix}
+  pro         String // JSON {what,why,fix}
+  fix         String? // JSON DependencyFix (dependency findings only)
+  createdAt   DateTime @default(now())
+
+  @@index([scanId])
+}

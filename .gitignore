@@ -1,0 +1,41 @@
+# ── Dependencies ──
+node_modules/
+
+# ── Build output ──
+dist/
+build/
+
+# ── Environment & secrets — NEVER commit ──
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+*.p12
+# (env templates are kept — see Backend/.env.example, Frontend/.env.example)
+
+# ── Database ──
+*.db
+*.db-journal
+*.sqlite
+
+# ── Downloaded scanner binaries (re-fetched on setup) ──
+Backend/bin/
+
+# ── Logs ──
+*.log
+npm-debug.log*
+yarn-error.log*
+
+# ── OS / editor / tooling ──
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+.claude/
+
+# Build artifacts
+*.tsbuildinfo
+Frontend/vite.config.js
+Frontend/vite.config.d.ts

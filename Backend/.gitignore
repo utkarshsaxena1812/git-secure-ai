@@ -1,0 +1,14 @@
+node_modules/
+dist/
+.env
+.env.local
+*.pem
+*.log
+
+# Downloaded scanner binaries (re-fetched via scripts/setup) and scan workspaces.
+bin/
+.scans/
+
+# Local SQLite database files.
+prisma/*.db
+prisma/*.db-journal
