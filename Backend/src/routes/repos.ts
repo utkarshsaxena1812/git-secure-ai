@@ -54,7 +54,7 @@ export async function repoRoutes(app: FastifyInstance) {
   })
 
   // Run a real scan (gitleaks), persist the result, and return normalized findings.
-  app.post('/api/repos/:id/scan', async (req, reply) => {
+  app.post('/api/repos/:id/scan', { config: { rateLimit: { max: 10, timeWindow: '1 minute' } } }, async (req, reply) => {
     const session = sessionFromRequest(req)
     if (!session) return reply.code(401).send({ error: 'unauthenticated' })
 
@@ -107,7 +107,7 @@ export async function repoRoutes(app: FastifyInstance) {
   })
 
   // Run the validated fix loop and open a PR for a dependency finding.
-  app.post('/api/repos/:id/fix', async (req, reply) => {
+  app.post('/api/repos/:id/fix', { config: { rateLimit: { max: 10, timeWindow: '1 minute' } } }, async (req, reply) => {
     const session = sessionFromRequest(req)
     if (!session) return reply.code(401).send({ error: 'unauthenticated' })
 
