@@ -192,11 +192,8 @@ async function applyPipFix(repoDir: string, fix: DependencyFix): Promise<FileCha
     throw new FixError(`Manifest ${fix.manifest} not found in the repository.`, 'apply_failed')
   }
   const updated = applyPipBump(original, fix.package, fix.fixedVersion)
-  if (!updated || updated === original) {
-    throw new FixError(
-      `Couldn’t update ${fix.package} in ${fix.manifest} — it may be a transitive dependency needing a manual change.`,
-      'apply_failed',
-    )
+  if (updated === original) {
+    throw new FixError(`Couldn’t apply the bump for ${fix.package} in ${fix.manifest}.`, 'apply_failed')
   }
   await writeFile(manifestPath, updated, 'utf8')
   return [{ path: fix.manifest, content: updated }]

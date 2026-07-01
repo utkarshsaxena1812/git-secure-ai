@@ -21,11 +21,12 @@ export function ecosystemOf(fix: DependencyFix): 'pip' | 'npm' | 'other' {
 const normalizeName = (s: string) => s.toLowerCase().replace(/[-_.]+/g, '-')
 
 /**
- * Bumps a pip requirement to an exact pin. Returns new content, or null if the
- * package isn't directly listed (e.g. a transitive dep) — so we never open a
- * misleading PR.
+ * Bumps a pip requirement to an exact pin. If the package is directly listed it's
+ * updated in place; if it's transitive (not in the file) an explicit pin is
+ * appended — the pip equivalent of an npm override, which pip honors over the
+ * transitively-resolved version.
  */
-export function applyPipBump(content: string, pkg: string, fixedVersion: string): string | null {
+export function applyPipBump(content: string, pkg: string, fixedVersion: string): string {
   const target = normalizeName(pkg)
   let changed = false
   const lines = content.split(/\r?\n/).map((line) => {
@@ -43,7 +44,12 @@ export function applyPipBump(content: string, pkg: string, fixedVersion: string)
     const rewritten = `${m[1]}${m[2] ?? ''}==${fixedVersion}${marker}`
     return comment ? `${rewritten}  ${comment}` : rewritten
   })
-  return changed ? lines.join('\n') : null
+  if (changed) return lines.join('\n')
+
+  // Transitive dependency → append an explicit security pin.
+  const base = content.replace(/\s*$/, '')
+  const pin = `${pkg}==${fixedVersion}  # security pin (Git Secure-AI)`
+  return base ? `${base}\n${pin}\n` : `${pin}\n`
 }
 
 export type NpmEdit = { content: string; strategy: 'range' | 'override' }

@@ -36,8 +36,11 @@ test('applyPipBump preserves extras and markers, matches normalized names', () =
   assert.equal(applyPipBump('Stream_Lit[extra]>=1.0 ; python_version>"3.8"', 'stream-lit', '1.54.0'), 'Stream_Lit[extra]==1.54.0 ; python_version>"3.8"')
 })
 
-test('applyPipBump returns null when the package is absent (transitive)', () => {
-  assert.equal(applyPipBump('flask==2.0.0\n', 'streamlit', '1.54.0'), null)
+test('applyPipBump appends a pin when the package is absent (transitive)', () => {
+  assert.equal(
+    applyPipBump('flask==2.0.0\n', 'pillow', '12.2.0'),
+    'flask==2.0.0\npillow==12.2.0  # security pin (Git Secure-AI)\n',
+  )
 })
 
 // ---- npm ----
