@@ -1,5 +1,7 @@
 # Git Secure-AI
 
+[![CI](https://github.com/utkarshsaxena1812/git-secure-ai/actions/workflows/ci.yml/badge.svg)](https://github.com/utkarshsaxena1812/git-secure-ai/actions/workflows/ci.yml)
+
 A security tool that connects to your GitHub, finds vulnerabilities, fixes them
 with AI, and — crucially — **explains every finding in plain language** so you
 learn while you fix.
