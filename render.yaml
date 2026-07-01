@@ -1,9 +1,9 @@
-# Render Blueprint — one-click-ish deploy of the backend API + static frontend.
+# Render Blueprint — deploys the backend API + static frontend (no Docker).
 # See DEPLOY.md for the full walkthrough (GitHub App prod callback, secrets, etc.).
 #
-# Note: the backend uses SQLite on a persistent disk, which requires a paid
-# instance type (free web services have an ephemeral filesystem — data resets on
-# every deploy). Swap to a managed Postgres later for scale.
+# Defaults to the FREE tier: the backend spins down when idle and its filesystem
+# is ephemeral, so SQLite data resets on each deploy. To make data persist,
+# switch the API service to `plan: starter` and add a disk (see DEPLOY.md).
 
 services:
   # ── Backend API (Node/Fastify) ──
@@ -11,19 +11,15 @@ services:
     name: git-secure-ai-api
     runtime: node
     rootDir: Backend
-    plan: starter # required for a persistent disk (free tier has no disk)
+    plan: free
     buildCommand: npm ci --include=dev && npm run setup:scanners && npx prisma generate && npm run build
     startCommand: npx prisma migrate deploy && npm start
     healthCheckPath: /api/health
-    disk:
-      name: sai-data
-      mountPath: /var/data
-      sizeGB: 1
     envVars:
       - key: NODE_ENV
         value: production
       - key: DATABASE_URL
-        value: file:/var/data/prod.db
+        value: file:./prod.db
       - key: FRONTEND_URL
         fromService:
           type: web

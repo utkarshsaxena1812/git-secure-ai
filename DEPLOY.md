@@ -17,11 +17,11 @@ build) to [Render](https://render.com) — no Docker required. The included
 3. The frontend build auto-receives the API URL (`VITE_API_URL`), and the backend
    auto-receives the frontend URL (`FRONTEND_URL`) — wired by the Blueprint.
 
-> **Cost note:** the backend uses **SQLite on a persistent disk**, which needs a
-> paid instance type (`starter`, ~\$7/mo). On the free tier the filesystem is
-> ephemeral — your scan history/fixes reset on every deploy. To stay free,
-> either accept that, or switch to a managed Postgres later (a one-line Prisma
-> `provider` change).
+> **Cost note:** the Blueprint deploys on the **free** tier ($0). The backend
+> spins down when idle (slow first request) and its filesystem is ephemeral, so
+> SQLite scan history/fixes **reset on each deploy** — fine for testing. To make
+> data persist, on the API service set **plan → Starter** (~\$7/mo), add a
+> **disk** (mount `/var/data`, 1 GB), and set `DATABASE_URL=file:/var/data/prod.db`.
 
 ## 2. Point the GitHub App at production
 
