@@ -1,0 +1,2 @@
+# Shell scripts must be LF so they run on Linux hosts (Render build).
+*.sh text eol=lf
