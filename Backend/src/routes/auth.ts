@@ -29,8 +29,8 @@ export async function authRoutes(app: FastifyInstance) {
     const state = randomBytes(16).toString('hex')
     reply.setCookie(STATE_COOKIE, state, {
       httpOnly: true,
-      sameSite: 'lax',
-      secure: config.isProd,
+      sameSite: config.cookieSameSite,
+      secure: config.cookieSecure,
       path: '/',
       signed: true,
       maxAge: 600,

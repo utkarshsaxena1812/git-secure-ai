@@ -9,7 +9,9 @@ import {
   type Finding,
 } from './mockData'
 
-const API_URL = (import.meta.env.VITE_API_URL ?? '').replace(/\/$/, '')
+// Accept a full URL, or a bare host (some hosts inject the hostname only → https).
+const rawApiUrl = (import.meta.env.VITE_API_URL ?? '').trim().replace(/\/$/, '')
+const API_URL = rawApiUrl && !/^https?:\/\//.test(rawApiUrl) ? `https://${rawApiUrl}` : rawApiUrl
 export const isLiveMode = API_URL !== ''
 
 export type User = { login: string; name: string | null; avatarUrl: string }

@@ -8,6 +8,9 @@ import { authRoutes } from './routes/auth.js'
 import { repoRoutes } from './routes/repos.js'
 
 const app = Fastify({
+  // Behind a PaaS proxy (Render/Railway) — trust X-Forwarded-* so secure cookies
+  // and rate-limit IP keying work over the proxied HTTPS connection.
+  trustProxy: true,
   logger: {
     transport: config.isProd ? undefined : { target: 'pino-pretty', options: { translateTime: 'HH:MM:ss', ignore: 'pid,hostname' } },
   },

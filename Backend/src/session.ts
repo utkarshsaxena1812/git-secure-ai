@@ -33,8 +33,8 @@ export function destroySession(id: string | undefined): void {
 
 const cookieOptions = {
   httpOnly: true,
-  sameSite: 'lax' as const,
-  secure: config.isProd,
+  sameSite: config.cookieSameSite,
+  secure: config.cookieSecure,
   path: '/',
   signed: true,
   maxAge: 60 * 60 * 24 * 7, // 7 days
